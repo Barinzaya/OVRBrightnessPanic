@@ -9,6 +9,10 @@ namespace OVRBrightnessPanic
 {
     public class Program
     {
+        public const float ACTIVATE_FACTOR = 0.5f;
+        public const float DT = 0.05f;
+        public const float RESET_SPEED = 0.25f;
+
         private CVRInput vrInput;
         private CVRSettings vrSettings;
         private CVRSystem vrSystem;
@@ -109,6 +113,7 @@ namespace OVRBrightnessPanic
 
             Console.WriteLine("Brightness panic button is running. Input bindings may be changed through SteamVR's input bindings.");
 
+            var sleepTime = (int)Math.Round(1000 * DT);
             while(running)
             {
                 while(vrSystem.PollNextEvent(ref ev, evSize))
@@ -149,12 +154,16 @@ namespace OVRBrightnessPanic
                     throw new Exception($"Failed to get Reset action state: {message}");
                 }
 
-                if(actionData.bChanged && actionData.bState)
+                if(actionData.bState)
                 {
-                    TriggerReset();
+                    var resetting = TriggerReset(DT * RESET_SPEED);
+                    if(resetting && actionData.bChanged)
+                    {
+                        resetSound.Play();
+                    }
                 }
 
-                Thread.Sleep(50);
+                Thread.Sleep(sleepTime);
             }
 
             TriggerReset();
@@ -176,27 +185,44 @@ namespace OVRBrightnessPanic
         public void TriggerActivate()
         {
             var brightness = GetBrightness();
-            initialBrightness = initialBrightness ?? brightness;
+            if(initialBrightness == null || initialBrightness < brightness)
+            {
+                initialBrightness = brightness;
+            }
 
-            brightness = Math.Max(0.2f, Math.Min(0.5f * brightness, 1.6f));
+            brightness = Math.Max(0.2f, Math.Min(ACTIVATE_FACTOR * brightness, 1.6f));
             SetBrightness(brightness);
 
             Console.WriteLine($"Panic button activated! Brightness decreased to {100 * brightness:f0}%.");
             activateSound.Play();
         }
 
-        public void TriggerReset()
+        public bool TriggerReset(float maxAmount = float.PositiveInfinity)
         {
+            var result = false;
+
             if(initialBrightness.HasValue)
             {
-                var brightness = initialBrightness.Value;
-                initialBrightness = null;
+                var brightness = GetBrightness();
+                var targetBrightness = initialBrightness.Value;
 
-                SetBrightness(brightness);
-                Console.WriteLine($"Panic button reset! Brightness restored to {100 * brightness:f0}%.");
+                var delta = targetBrightness - brightness;
+                if(delta > 0)
+                {
+                    brightness = brightness + Math.Min(delta, maxAmount);
+                    SetBrightness(brightness);
 
-                resetSound.Play();
+                    result = true;
+                }
+                
+                if(brightness >= targetBrightness)
+                {
+                    resetSound.Play();
+                    initialBrightness = null;
+                }
             }
+
+            return result;
         }
 
         public float GetBrightness()
