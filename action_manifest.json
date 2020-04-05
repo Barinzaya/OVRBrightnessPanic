@@ -1,0 +1,34 @@
+{
+   "action_sets" : [
+      {
+         "name" : "/actions/main",
+         "usage" : "leftright"
+      }
+   ],
+   "actions" : [
+      {
+         "name" : "/actions/main/in/activate",
+         "requirement" : "suggested",
+         "type" : "boolean"
+      },
+      {
+         "name" : "/actions/main/in/reset",
+         "requirement" : "optional",
+         "type" : "boolean"
+      }
+   ],
+   "default_bindings" : [
+      {
+         "binding_url" : "default_bindings_knuckles.json",
+         "controller_type" : "knuckles"
+      }
+   ],
+   "localization" : [
+      {
+         "/actions/main" : "Main",
+         "/actions/main/in/activate" : "Activate",
+         "/actions/main/in/reset" : "Reset",
+         "language_tag" : "en_US"
+      }
+   ]
+}

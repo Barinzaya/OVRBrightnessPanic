@@ -1,0 +1,17 @@
+
+{
+	"source" : "builtin",
+	"applications": [{
+		"app_key": "Barinzaya.OVRBrightnessPanic",
+		"launch_type": "binary",
+		"binary_path_windows": "OVRBrightnessPanic.exe",
+		"is_dashboard_overlay": false,
+
+		"strings": {
+			"en_us": {
+				"name": "Brightness Panic",
+				"description": "A panic button for quickly decreasing the brightness of the VR headset."
+			}
+		}
+	}]
+}
