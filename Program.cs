@@ -173,14 +173,30 @@ namespace OVRBrightnessPanic
                     TriggerActivate();
                 }
 
-                if(resetAutoPressed)
+                if(initialBrightness.HasValue && resetAutoPressed)
                 {
                     resetting = !resetting;
+                    if(resetting)
+                    {
+                        Console.WriteLine("Starting automatic reset.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Cancelling automatic reset.");
+                    }
                 }
 
-                if(resetHoldChanged)
+                if(initialBrightness.HasValue && resetHoldChanged)
                 {
                     resetting = resetHoldHeld;
+                    if(resetting)
+                    {
+                        Console.WriteLine("Starting held reset.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Cancelling held reset.");
+                    }
                 }
 
                 if(resetting)
@@ -188,7 +204,11 @@ namespace OVRBrightnessPanic
                     resetting = TriggerReset(DT * RESET_SPEED);
                     if(resetting && (resetAutoPressed || resetHoldChanged))
                     {
-                        resetSound.Play();
+                        try
+                        {
+                            resetSound.Play();
+                        }
+                        catch(FileNotFoundException) {}
                     }
                 }
 
@@ -238,7 +258,11 @@ namespace OVRBrightnessPanic
             SetBrightness(brightness);
 
             Console.WriteLine($"Panic button activated! Brightness decreased to {100 * brightness:f0}%.");
-            activateSound.Play();
+            try
+            {
+                activateSound.Play();
+            }
+            catch(FileNotFoundException) {}
         }
 
         public bool TriggerReset(float maxAmount = float.PositiveInfinity)
@@ -261,6 +285,7 @@ namespace OVRBrightnessPanic
                 
                 if(brightness >= targetBrightness)
                 {
+                    Console.WriteLine("Reset completed.");
                     initialBrightness = null;
                 }
             }
