@@ -18,11 +18,12 @@ namespace OVRBrightnessPanic
         private CVRSystem vrSystem;
 
         private ulong inputSet;
-        private ulong inputActivate, inputReset;
+        private ulong inputActivate, inputResetAuto, inputResetHold;
 
         private SoundPlayer activateSound, resetSound;
 
         private float? initialBrightness = null;
+        private bool resetting = false;
         private bool running = true;
 
         public static void Main(string[] args)
@@ -49,7 +50,7 @@ namespace OVRBrightnessPanic
             Console.CancelKeyPress += CancelKeyPressed;
 
             var initError = EVRInitError.None;
-            vrSystem = OpenVR.Init(ref initError, EVRApplicationType.VRApplication_Utility);
+            vrSystem = OpenVR.Init(ref initError, EVRApplicationType.VRApplication_Background);
             if(initError != EVRInitError.None)
             {
                 var message = OpenVR.GetStringForHmdError(initError);
@@ -83,11 +84,18 @@ namespace OVRBrightnessPanic
                 throw new Exception($"Failed to get action handle for Activate: {message}");
             }
 
-            inputError = vrInput.GetActionHandle("/actions/main/in/reset", ref inputReset);
+            inputError = vrInput.GetActionHandle("/actions/main/in/reset-auto", ref inputResetAuto);
             if(inputError != EVRInputError.None)
             {
                 var message = inputError.ToString();
-                throw new Exception($"Failed to get action handle for Reset: {message}");
+                throw new Exception($"Failed to get action handle for Reset (Auto): {message}");
+            }
+
+            inputError = vrInput.GetActionHandle("/actions/main/in/reset", ref inputResetHold);
+            if(inputError != EVRInputError.None)
+            {
+                var message = inputError.ToString();
+                throw new Exception($"Failed to get action handle for Reset (Hold): {message}");
             }
 
             activateSound = new SoundPlayer(Path.Combine(appDir, "activate.wav"));
@@ -141,23 +149,44 @@ namespace OVRBrightnessPanic
                     var message = inputError.ToString();
                     throw new Exception($"Failed to get Activate action state: {message}");
                 }
+                var activatePressed = actionData.bChanged && actionData.bState;
 
-                if(actionData.bChanged && actionData.bState)
+                inputError = vrInput.GetDigitalActionData(inputResetAuto, ref actionData, actionDataSize, 0);
+                if(inputError != EVRInputError.None)
+                {
+                    var message = inputError.ToString();
+                    throw new Exception($"Failed to get Reset (Auto) action state: {message}");
+                }
+                var resetAutoPressed = actionData.bChanged && actionData.bState;
+
+                inputError = vrInput.GetDigitalActionData(inputResetHold, ref actionData, actionDataSize, 0);
+                if(inputError != EVRInputError.None)
+                {
+                    var message = inputError.ToString();
+                    throw new Exception($"Failed to get Reset (Hold) action state: {message}");
+                }
+                var resetHoldChanged = actionData.bChanged;
+                var resetHoldHeld = actionData.bState;
+
+                if(activatePressed)
                 {
                     TriggerActivate();
                 }
 
-                inputError = vrInput.GetDigitalActionData(inputReset, ref actionData, actionDataSize, 0);
-                if(inputError != EVRInputError.None)
+                if(resetAutoPressed)
                 {
-                    var message = inputError.ToString();
-                    throw new Exception($"Failed to get Reset action state: {message}");
+                    resetting = !resetting;
                 }
 
-                if(actionData.bState)
+                if(resetHoldChanged)
                 {
-                    var resetting = TriggerReset(DT * RESET_SPEED);
-                    if(resetting && actionData.bChanged)
+                    resetting = resetHoldHeld;
+                }
+
+                if(resetting)
+                {
+                    resetting = TriggerReset(DT * RESET_SPEED);
+                    if(resetting && (resetAutoPressed || resetHoldChanged))
                     {
                         resetSound.Play();
                     }
@@ -165,12 +194,27 @@ namespace OVRBrightnessPanic
 
                 Thread.Sleep(sleepTime);
             }
-
-            TriggerReset();
         }
 
         public void Deinit()
         {
+            if(vrSettings != null)
+            {
+                TriggerReset();
+            }
+
+            if(vrSystem != null)
+            {
+                OpenVR.Shutdown();
+                vrInput = null;
+                vrSettings = null;
+                vrSystem = null;
+
+                inputActivate = 0;
+                inputResetAuto = 0;
+                inputResetHold = 0;
+                inputSet = 0;
+            }
         }
 
         public void CancelKeyPressed(object sender, ConsoleCancelEventArgs args)
@@ -217,7 +261,6 @@ namespace OVRBrightnessPanic
                 
                 if(brightness >= targetBrightness)
                 {
-                    resetSound.Play();
                     initialBrightness = null;
                 }
             }

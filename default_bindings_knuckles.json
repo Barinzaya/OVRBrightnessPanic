@@ -21,7 +21,7 @@
                   [ "/user/hand/left/input/b", "click" ],
                   [ "/user/hand/right/input/b", "click" ]
                ],
-               "output" : "/actions/main/in/reset"
+               "output" : "/actions/main/in/reset-auto"
             }
          ],
          "sources" : [

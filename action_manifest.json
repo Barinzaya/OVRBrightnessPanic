@@ -15,6 +15,11 @@
          "name" : "/actions/main/in/reset",
          "requirement" : "optional",
          "type" : "boolean"
+      },
+      {
+         "name" : "/actions/main/in/reset-auto",
+         "requirement" : "optional",
+         "type" : "boolean"
       }
    ],
    "default_bindings" : [
@@ -27,7 +32,8 @@
       {
          "/actions/main" : "Main",
          "/actions/main/in/activate" : "Activate",
-         "/actions/main/in/reset" : "Reset",
+         "/actions/main/in/reset" : "Reset (Hold)",
+         "/actions/main/in/reset-auto" : "Reset (Auto)",
          "language_tag" : "en_US"
       }
    ]
