@@ -8,7 +8,7 @@
    "actions" : [
       {
          "name" : "/actions/main/in/activate",
-         "requirement" : "suggested",
+         "requirement" : "optional",
          "type" : "boolean"
       },
       {
