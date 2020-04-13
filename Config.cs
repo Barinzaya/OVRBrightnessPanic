@@ -16,6 +16,8 @@
     public class AutoBrightnessConfig
     {
         public bool Enabled { get; set; } = true;
+
+        public string ActivateSound { get; set; } = null;
         public float BrightnessFrequency { get; set; } = 10f;
 
         public float DynamicMinBrightness { get; set; } = 0.25f;

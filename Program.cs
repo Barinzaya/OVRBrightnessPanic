@@ -42,7 +42,7 @@ namespace OVRBrightnessPanic
         private VRActiveActionSet_t[] inputSets;
 
         private Config config;
-        private SoundPlayer activateSound, resetSound;
+        private SoundPlayer activateSound, autoActivateSound, resetSound;
 
         private float minBrightness, maxBrightness;
 
@@ -99,6 +99,11 @@ namespace OVRBrightnessPanic
             var appDir = AppDomain.CurrentDomain.BaseDirectory;
             activateSound = LoadSound(config.ActivateSound);
             resetSound    = LoadSound(config.ResetSound);
+
+            if(config.Auto.Enabled)
+            {
+                autoActivateSound = LoadSound(config.Auto.ActivateSound);
+            }
         }
 
         private void InitGL()
@@ -659,7 +664,7 @@ namespace OVRBrightnessPanic
                 if(!autoInitialBrightness.HasValue)
                 {
                     autoInitialBrightness = screenBrightness;
-                    activateSound.Play();
+                    autoActivateSound?.Play();
                 }
 
                 screenBrightness = maxBrightness;
